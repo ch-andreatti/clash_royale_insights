@@ -127,6 +127,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+py_env
 
 # Spyder project settings
 .spyderproject
@@ -158,3 +159,7 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+
+# json files to Clash Royake API data extraction
+source_code/data_extraction/access_token.json
+source_code/data_extraction/players_tag.json
