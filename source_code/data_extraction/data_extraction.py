@@ -12,6 +12,6 @@ with open("./players_tag.json", "r") as file:
 personal_tag = players_tag["personal_tag"]
 
 headers = {"Authorization": f"Bearer {token}"}
-response = requests.get(f"https://api.clashroyale.com/v1/players/{personal_tag}", headers=headers)
+response = requests.get(f"https://proxy.royaleapi.dev/v1/players/{personal_tag}", headers=headers)
 
 print(response.text)
