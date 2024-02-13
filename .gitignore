@@ -161,5 +161,5 @@ cython_debug/
 #.idea/
 
 # json files to Clash Royake API data extraction
-source_code/data_extraction/access_token.json
-source_code/data_extraction/players_tag.json
+source_code/data_ingestion/access_token.json
+source_code/data_ingestion/players_info.json
