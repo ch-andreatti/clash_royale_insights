@@ -4,12 +4,22 @@ This script is responsible for creating and updating the players_info table in t
 
 # Libraries
 
+import datetime
 import json
 import pyspark
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType,StructField, StringType, IntegerType
 from delta import *
 from data_extraction_functions import *
+
+# Helper functions
+
+def get_last_season_id():
+
+    first_day_of_current_month = datetime.datetime.today().replace(day=1)
+    last_day_of_previous_month = first_day_of_current_month - datetime.timedelta(days=1)
+    last_season_id = last_day_of_previous_month.strftime('%Y-%m')
+    return last_season_id
 
 # Data info
 target_bucket = "support"
@@ -51,7 +61,7 @@ with open("./players_tag.json", "r") as file:
 for key, tag in fixed_players.items():
     
     player_info = get_player_info(tag)
-    if player_info != "":
+    if player_info is not None:
 
         player_info = json.loads(player_info)
 
@@ -79,9 +89,8 @@ for key, tag in fixed_players.items():
 
 fixed_players_tags = [tag for tag in fixed_players.values()]
 
-top_path_of_legend_players = get_top_path_of_legend_players("2024-01", 3) # Pegar última season de forma automatica
-
-if top_path_of_legend_players != "":
+top_path_of_legend_players = get_top_path_of_legend_players(get_last_season_id(), 3)
+if top_path_of_legend_players is not None:
 
     top_path_of_legend_players = json.loads(top_path_of_legend_players)
 
@@ -95,7 +104,7 @@ if top_path_of_legend_players != "":
             continue
 
         player_info = get_player_info(player_tag)
-        if player_info != "":
+        if player_info is not None:
 
             player_info = json.loads(player_info)
 

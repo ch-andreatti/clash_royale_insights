@@ -7,9 +7,7 @@ This script contains functions that help extract data from the Clash Royale API
 import requests
 import json
 
-# Global variables
-
-# base_url = "https://proxy.royaleapi.dev/v1/"
+# Load access token
 
 with open("./access_token.json", "r") as file:
     access_token = json.load(file)
@@ -17,38 +15,23 @@ token = access_token["token"]
 
 # Functions
 
-def get_headers(token: str):
-    """
-    This function will be responsible for creating the headers,
-    which will be used in the get_response function
-
-    Args:
-        token (str): token to communicate with Clash Royale API
-
-    Returns:
-        header (dict)
-    """
-    
-    header = {"Authorization": f"Bearer {token}"}
-    return header
-
 def get_response(url_path: str, payload: dict = None):
     """
     This function will be responsible for making request to Clash Royale API
     If the request was successful, the function will return the response
-    If the request was unsuccessful, the function will return empty string
+    If the request was unsuccessful, the function will return None
 
     Args:
         url_path (str): The specif url path desired
         payload (dict, optional): Parameters for url, if the payload is None, these parameters will not be sent
 
     Returns:
-        response if successful or empty string if unsuccessful
+        response if successful or None if unsuccessful
     """
 
     base_url = "https://proxy.royaleapi.dev/v1"
     url = base_url + url_path
-    headers = get_headers(token)
+    headers = {"Authorization": f"Bearer {token}"}
 
     if payload is None:
         response = requests.get(url, headers=headers)
@@ -56,10 +39,8 @@ def get_response(url_path: str, payload: dict = None):
         response = requests.get(url, headers=headers, params=payload)
 
     status_code = response.status_code
-
     if status_code == 404:
-        print("Error 404")
-        return ""
+        return None
     else:
         return response
 
@@ -93,13 +74,9 @@ def get_player_info(player_tag: str):
     url_path = f"/players/{player_tag}"
 
     response = get_response(url_path)
-    successful_response = response != ""
-
-    if successful_response:
-        return response.text
-    else:
-        print("Unsuccess response")
-        return ""
+    
+    successful_response = response is not None
+    return response.text if successful_response else None
 
 def get_top_path_of_legend_players(season_id: str, limit: int = None):
     """
@@ -121,10 +98,5 @@ def get_top_path_of_legend_players(season_id: str, limit: int = None):
     else:
         response = get_response(url_path)
     
-    successful_response = response != ""
-
-    if successful_response:
-        return response.text
-    else:
-        print("Unsuccess response")
-        return ""
+    successful_response = response is not None
+    return response.text if successful_response else None
