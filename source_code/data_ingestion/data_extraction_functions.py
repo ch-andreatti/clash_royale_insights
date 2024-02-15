@@ -80,7 +80,7 @@ def player_tag_correction(player_tag: str):
 
 def get_player_info(player_tag: str):
     """
-    This function will be responsible for request information about a specif player
+    This function will be responsible for get information about a specif player
 
     Args:
         player_tag (str): Player tag in original form

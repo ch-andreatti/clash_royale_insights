@@ -8,14 +8,20 @@ import json
 import pyspark
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType,StructField, StringType, IntegerType
+from delta import *
 from data_extraction_functions import *
 
 # Data info
 target_bucket = "support"
 target_table = "players_info"
 
-# Start spark session
-spark = SparkSession.builder.appName('players_info').getOrCreate()
+# Config SparkSession
+builder = (
+    SparkSession.builder.appName("players_info")
+    .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+)
+spark = configure_spark_with_delta_pip(builder).getOrCreate()
 
 # Resources of players_info table
 
@@ -45,7 +51,6 @@ with open("./players_tag.json", "r") as file:
 for key, tag in fixed_players.items():
     
     player_info = get_player_info(tag)
-
     if player_info != "":
 
         player_info = json.loads(player_info)
@@ -68,17 +73,53 @@ for key, tag in fixed_players.items():
         players_info_data.append(row)
     
     else:
-
         print(f"Problem to get data from fixed player {key} with tag {tag}, at players_tag.json")
-        continue
-
-# Get players_info_df
-
-players_info_df = spark.createDataFrame(data=players_info_data, schema=players_info_schema)
 
 # Get data from temporary players
 
-top_path_of_legend_players = get_top_path_of_legend_players("2024-01", 3)
-top_path_of_legend_players = json.loads(top_path_of_legend_players)
+fixed_players_tags = [tag for tag in fixed_players.values()]
 
-print(top_path_of_legend_players["items"])
+top_path_of_legend_players = get_top_path_of_legend_players("2024-01", 3) # Pegar última season de forma automatica
+
+if top_path_of_legend_players != "":
+
+    top_path_of_legend_players = json.loads(top_path_of_legend_players)
+
+    for player in top_path_of_legend_players["items"]:
+
+        player_tag = player.get("tag")
+        player_name = player.get("name")
+        
+        # To avoid duplicate data, only players who are not in the players_tag.json file will be considered
+        if player_tag in fixed_players_tags:
+            continue
+
+        player_info = get_player_info(player_tag)
+        if player_info != "":
+
+            player_info = json.loads(player_info)
+
+            row = (
+                player_info.get("tag", ""),
+                player_info.get("name", ""),
+                player_info.get("expLevel", 0),
+                player_info.get("trophies", 0),
+                player_info.get("bestTrophies", 0),
+                player_info.get("wins", 0),
+                player_info.get("losses", 0),
+                player_info.get("battleCount", 0),
+                player_info.get("threeCrownWins", 0),
+                player_info.get("challengeMaxWins", 0),
+                player_info.get("role", ""),
+                player_info.get("totalDonations", 0),
+                player_info["arena"]["name"]
+            )
+            players_info_data.append(row)
+        
+        else:
+            print(f"Problem to get data from temporary player {player_name} with tag {player_tag}")
+
+# Get and save players_info_df
+players_info_df = spark.createDataFrame(data=players_info_data, schema=players_info_schema)
+# players_info_df.write.format("delta").save("players_info_df")
+players_info_df.show()
